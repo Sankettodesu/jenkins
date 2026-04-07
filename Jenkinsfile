@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     environment {
-        // Change these to your actual details
         DOCKER_IMAGE = "my-portfolio-web"
         REMOTE_USER  = "ubuntu" 
         REMOTE_HOST  = "192.168.174.131" 
@@ -23,17 +22,20 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                // Build the image on the Rocky Linux box
+                // We build it locally on the Jenkins (Rocky) node
                 sh "docker build -t ${DOCKER_IMAGE}:latest ."
             }
         }
 
         stage('Deploy to Production') {
             steps {
-                // This command tells Ubuntu to pull the code and run it
-                // We use SSH to execute commands remotely
+                // This is the "Magic" line: 
+                // 1. 'docker save' turns the image into a data stream
+                // 2. '| ssh' sends that stream to Ubuntu
+                // 3. 'docker load' on Ubuntu turns that stream back into an image
                 sh """
-                ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} '
+                docker save ${DOCKER_IMAGE}:latest | ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} '
+                    docker load
                     docker stop portfolio-site || true
                     docker rm portfolio-site || true
                     docker run -d --name portfolio-site -p 80:80 ${DOCKER_IMAGE}:latest
