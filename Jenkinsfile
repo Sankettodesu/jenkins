@@ -38,7 +38,7 @@ pipeline {
                     docker load
                     docker stop portfolio-site || true
                     docker rm portfolio-site || true
-                    docker run -d --name portfolio-site -p 80:80 ${DOCKER_IMAGE}:latest
+                    docker run -d --name portfolio-site -p 8081:80 ${DOCKER_IMAGE}:latest
                 '
                 """
             }
